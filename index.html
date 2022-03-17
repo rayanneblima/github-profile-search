@@ -101,8 +101,9 @@
         <ul data-bind="foreach: userRepositories">
           <li>
             <div>
-              <h6>
-                <a data-bind="attr: { href: $data.homepage }, text: $data.name" target="_blank"></a>
+              <h6>  
+                <p data-bind="text: $data.name, visible: !$data.homepage"></p>
+                <a data-bind="attr: { href: $data.homepage }, text: $data.name, visible: $data.homepage" target="_blank"></a>
               </h6>
               <p data-bind="text: $data.description"></p>
             </div>
