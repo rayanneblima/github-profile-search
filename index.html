@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Github Search Profile - KnockoutJS</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <header>
+    <h1>Github Search Profile</h1>
+
+    <fieldset>
+      <input 
+        type="text" 
+        placeholder="Search for a user nickname" 
+        data-bind="event: { keypress: handleInputSearch }, textInput: inputSearch" 
+      />
+
+      <button 
+        class="search-btn" 
+        type="submit" 
+        data-bind="click: handleButtonClick, disable: !inputSearch()"
+      >
+        Search
+      </button>
+    </fieldset>
+  </header>
+
+  <section id="loader" data-bind="visible: showLoader">
+    <span></span>
+  </section>
+
+  <section 
+    id="alert" 
+    data-bind="
+      click: clearAlertMessage,
+      css: { 'alert-show': alertMessage().showMessage },
+      with: alertMessage
+    "
+  >
+    <div 
+      class="alert"
+      data-bind="
+        click: () => {}, 
+        clickBubble: false,
+        css: 'alert-' + type,
+        visible: showMessage
+      ">
+      <div class="alert__header" data-bind="text: $data.title">
+      </div>
+      <p data-bind="text: $data.message"></p>
+    </div>
+  </section>
+
+  <main>
+    <section 
+      id="user" 
+      data-bind="
+        style: { visibility: !userInfo() && showLoader() && 'hidden' }, 
+        visible: userInfo(), 
+        with: userInfo
+      "
+    >
+      <div id="user__image" data-bind="visible: !$root.showLoader()">
+        <img 
+          data-bind="attr: { alt: 'Profile Image: ' + name, src: avatar_url }" 
+          height="150" 
+          width="150" 
+        />
+      </div>
+
+      <div id="user__info">
+        <h3 data-bind="text: name"></h3>
+        <span data-bind="text: '@' + login"></span>
+
+        <p data-bind="text: bio"></p>
+        <p data-bind="text: company"></p>
+        <p data-bind="text: location"></p>
+      </div>
+    </section>
+
+    <section 
+      id="repositories" 
+      data-bind="
+        style: { visibility: !userRepositories().length && showLoader() && 'hidden' }, 
+        visible: 
+        userInfo()
+      "
+    >
+      <div>
+        <h4>
+          Repositories
+          <span data-bind="visible: !showLoader() && !userRepositories().length">(0)</span>
+        </h4>
+      </div>
+
+      <div data-bind="visible: userRepositories().length">
+        <ul data-bind="foreach: userRepositories">
+          <li>
+            <div>
+              <h6>
+                <a data-bind="attr: { href: $data.homepage }, text: $data.name" target="_blank"></a>
+              </h6>
+              <p data-bind="text: $data.description"></p>
+            </div>
+            <span data-bind="text: $data.language, visible: $data.language"></span>
+          </li>
+        </ul>
+  
+        <button class="load-btn" data-bind="click: getUserRepositories, disable: disableLoadMore">Load More</button>
+      </div>
+
+    </section>
+  </main>
+
+  <script type="text/javascript" src="knockout-3.5.1.js"></script>
+  <script type="text/javascript">
+    function ViewModel () {
+      this.titlePage = ko.observable('Github Search Profile');
+      this.inputSearch = ko.observable('');
+      
+      this.alertMessage = ko.observable({
+        showMessage: false,
+        title: "",
+        message: "",
+        type: "default"
+      });
+
+      this.showLoader = ko.observable(false);
+      
+      this.userInfo = ko.observable(null);
+      
+      this.userRepositories = ko.observableArray([]);
+      this.indexPage = ko.observable(1);
+      this.disableLoadMore = ko.observable(false);
+
+      this.userRepository = ko.observable(null);
+
+      this.clearObservables = () => {
+        this.userInfo(null);
+        this.userRepository(null);
+        this.userRepositories([]);
+        this.indexPage(1);
+        this.disableLoadMore(false);
+        this.showLoader(false);
+      };
+
+      this.clearAlertMessage = () => {
+        this.alertMessage({
+          showMessage: false,
+          title: "",
+          message: "",
+          type: "default"
+        });
+      };
+
+      this.handleInputSearch = ((data, event) => {
+        if (event.key === 'Enter' || event.keyCode === 13) {
+          this.handleButtonClick();
+        }
+        return true;
+      });
+      
+      this.alertMessage.subscribe(({ type }) => {
+        if (type === 'error') {
+          this.clearObservables();
+        }
+      });
+
+      this.userInfo.subscribe((userInfo) => {
+        if (userInfo) {
+          this.clearAlertMessage();
+        }
+      });
+
+      this.mappingUserInfo = (data) => {
+        this.userInfo({
+          avatar_url: data.avatar_url, 
+          bio: data.bio, 
+          blog: data.blog, 
+          company: data.company, 
+          location: data.location, 
+          login: data.login, 
+          name: data.name
+        }); 
+      };
+
+      this.mappingUserRepositories = (data) => {
+        data.forEach((repository) => {
+          this.userRepository({
+            description: repository.description,
+            homepage: repository.homepage,
+            language: repository.language,
+            name: repository.name
+          });
+
+          this.userRepositories.push(this.userRepository());
+        });
+      };
+
+      this.getUserInfo = async () => {
+        await fetch(`https://api.github.com/users/${this.inputSearch()}`,
+          {
+            method: "GET",
+            headers: {
+              Accept: "application/vnd.github.mercy-preview+json"
+            }
+        })
+        .then(async response => {
+          if (!response.ok) {
+            this.alertMessage({
+              showMessage: true,
+              title: "User not found",
+              message: "Please, check the username searched and try again.",
+              type: "error"
+            });
+
+            throw new Error(response.statusText);
+          }
+          const data = await response.json();
+          this.mappingUserInfo(data);
+        });
+      };
+
+      this.getUserRepositories = async () => {
+        this.showLoader(true);
+
+        await fetch(`https://api.github.com/users/${this.inputSearch()}/repos?page=${this.indexPage()}&per_page=50`,
+        {
+            method: "GET",
+            headers: {
+              Accept: "application/vnd.github.mercy-preview+json"
+            }
+        })
+        .then(async response => {
+          if (!response.ok) {
+            throw new Error(response.statusText);
+          }
+
+          const data = await response.json();
+          if (this.indexPage() === 1) {
+            this.userRepositories([]);
+          }
+
+          if (!data.length && this.indexPage() > 1) {
+            this.disableLoadMore(true);
+            this.alertMessage({
+              showMessage: true,
+              title: "No more repositories",
+              message: "All repositories for this user have already been loaded.",
+              type: "warning"
+            });
+            return;
+          }
+          
+          this.mappingUserRepositories(data);
+          this.indexPage(this.indexPage() + 1);
+        });
+
+        this.showLoader(false);
+      };
+      
+      this.handleButtonClick = async () => {
+        this.clearObservables();
+        this.showLoader(true);
+
+        await this.getUserInfo();
+        await this.getUserRepositories();
+
+        this.showLoader(false);
+      };
+    }
+  
+    vm = new ViewModel();   
+    ko.applyBindings(vm);
+  </script>
+</body>
+</html>
