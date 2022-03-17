@@ -106,9 +106,15 @@
   
         <button class="load-btn" data-bind="click: getUserRepositories, disable: disableLoadMore">Load More</button>
       </div>
-
     </section>
   </main>
+
+  <my-footer 
+    params="
+      content: 'Developed with 💖 by Rayanne B. Lima',
+      subcontent: '© 2022 - All Rights Reserved.' 
+    "
+  />
 
   <script type="text/javascript" src="knockout-3.5.1.js"></script>
   <script type="text/javascript">
@@ -269,6 +275,20 @@
     }
   
     vm = new ViewModel();   
+    
+    ko.components.register("my-footer", {
+      template: `
+        <footer>
+          <h4 data-bind="text: content"></h4>
+          <h5 data-bind="text: subcontent"></h5>
+        </footer>
+      `,
+      viewModel: function ({ content, subcontent }) {
+        this.content = ko.observable(content);
+        this.subcontent = ko.observable(subcontent);
+      }
+    });
+    
     ko.applyBindings(vm);
   </script>
 </body>

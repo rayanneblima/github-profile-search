@@ -250,6 +250,17 @@ main {
   font-size: 0.8rem;
 }
 
+my-footer {
+  background: var(--primary-text);
+  color: white;
+  text-align: center;
+  
+  bottom: 0;
+  padding: 20px;
+  position: fixed;
+  width: 100%;
+}
+
 @media (max-width: 1200px) {
   main {
     max-width: 800px;
