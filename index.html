@@ -19,13 +19,15 @@
         data-bind="event: { keypress: handleInputSearch }, textInput: inputSearch" 
       />
 
-      <button 
-        class="search-btn" 
-        type="submit" 
-        data-bind="click: handleButtonClick, disable: !inputSearch()"
-      >
-        Search
-      </button>
+      <my-button
+        params="
+          btnType: 'submit',
+          handleClick: handleButtonClick,
+          btnClass: 'search-btn',
+          handleDisable: !inputSearch(),
+          btnText: 'Search'
+        "
+      />
     </fieldset>
   </header>
 
@@ -104,7 +106,14 @@
           </li>
         </ul>
   
-        <button class="load-btn" data-bind="click: getUserRepositories, disable: disableLoadMore">Load More</button>
+        <my-button
+          params="
+            handleClick: getUserRepositories,
+            btnClass: 'load-btn',
+            handleDisable: disableLoadMore,
+            btnText: 'Load More'
+          "
+        />
       </div>
     </section>
   </main>
@@ -284,8 +293,35 @@
         </footer>
       `,
       viewModel: function ({ content, subcontent }) {
-        this.content = ko.observable(content);
-        this.subcontent = ko.observable(subcontent);
+        this.content = ko.observable(content || null);
+        this.subcontent = ko.observable(subcontent || null);
+      }
+    });
+
+    ko.components.register("my-button", {
+      template: `
+        <button
+          data-bind="
+            attr: { type: btnType },
+            click: handleClick,
+            css: btnClass,
+            disable: handleDisable,
+            text: btnText
+          ">
+        </button>
+      `,
+      viewModel: function ({ btnType, handleClick, btnClass, handleDisable, btnText }) {
+        this.btnType = ko.observable(btnType || null);
+        this.btnClass = ko.observable(btnClass || null);
+        this.btnText = ko.observable(btnText || null);
+        
+        this.handleDisable = ko.computed(() => {
+          return ko.unwrap(handleDisable);
+        });
+
+        if (handleClick) {
+          this.handleClick = () => handleClick();
+        }
       }
     });
     
