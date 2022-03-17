@@ -86,24 +86,7 @@
       </div>
 
       <div data-bind="if: userRepositories().length">
-        <ul data-bind="foreach: userRepositories">
-          <li>
-            <div>
-              <h6> 
-                <!-- ko if: $data.homepage -->
-                <a data-bind="attr: { href: $data.homepage }, text: $data.name" target="_blank"></a>
-                <!-- /ko -->
-
-                <!-- ko ifnot: $data.homepage -->
-                <p data-bind="text: $data.name"></p>
-                <!-- /ko -->
-              </h6>
-              <p data-bind="text: $data.description"></p>
-            </div>
-            <!-- ko if: $data.language -->
-            <span data-bind="text: $data.language"></span>
-            <!-- /ko -->
-          </li>
+        <ul data-bind="template: { name: 'repository-card-template', foreach: userRepositories }">
         </ul>
   
         <my-button
@@ -115,6 +98,26 @@
           "
         />
       </div>
+
+      <script type="text/html" id="repository-card-template">
+        <li>
+          <div>
+            <h6> 
+              <!-- ko if: $data.homepage -->
+              <a data-bind="attr: { href: $data.homepage }, text: $data.name" target="_blank"></a>
+              <!-- /ko -->
+      
+              <!-- ko ifnot: $data.homepage -->
+              <p data-bind="text: $data.name"></p>
+              <!-- /ko -->
+            </h6>
+            <p data-bind="text: $data.description"></p>
+          </div>
+          <!-- ko if: $data.language -->
+          <span data-bind="text: $data.language"></span>
+          <!-- /ko -->
+        </li>
+      </script>
     </section>
   </main>
 
