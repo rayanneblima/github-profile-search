@@ -55,16 +55,9 @@
     </div>
   </section>
 
-  <main>
-    <section 
-      id="user" 
-      data-bind="
-        style: { visibility: !userInfo() && showLoader() && 'hidden' }, 
-        visible: userInfo(), 
-        with: userInfo
-      "
-    >
-      <div id="user__image" data-bind="visible: !$root.showLoader()">
+  <main data-bind="if: userInfo()">
+    <section id="user" data-bind="with: userInfo">
+      <div id="user__image">
         <img 
           data-bind="attr: { alt: 'Profile Image: ' + name, src: avatar_url }" 
           height="150" 
@@ -82,32 +75,32 @@
       </div>
     </section>
 
-    <section 
-      id="repositories" 
-      data-bind="
-        style: { visibility: !userRepositories().length && showLoader() && 'hidden' }, 
-        visible: 
-        userInfo()
-      "
-    >
+    <section id="repositories" data-bind="if: userInfo()">
       <div>
         <h4>
           Repositories
-          <span data-bind="visible: !showLoader() && !userRepositories().length">(0)</span>
+          <span data-bind="visible: !userRepositories().length && !showLoader()">(0)</span> 
         </h4>
       </div>
 
-      <div data-bind="visible: userRepositories().length">
+      <div data-bind="if: userRepositories().length">
         <ul data-bind="foreach: userRepositories">
           <li>
             <div>
-              <h6>  
-                <p data-bind="text: $data.name, visible: !$data.homepage"></p>
-                <a data-bind="attr: { href: $data.homepage }, text: $data.name, visible: $data.homepage" target="_blank"></a>
+              <h6> 
+                <!-- ko if: $data.homepage -->
+                <a data-bind="attr: { href: $data.homepage }, text: $data.name" target="_blank"></a>
+                <!-- /ko -->
+
+                <!-- ko ifnot: $data.homepage -->
+                <p data-bind="text: $data.name"></p>
+                <!-- /ko -->
               </h6>
               <p data-bind="text: $data.description"></p>
             </div>
-            <span data-bind="text: $data.language, visible: $data.language"></span>
+            <!-- ko if: $data.language -->
+            <span data-bind="text: $data.language"></span>
+            <!-- /ko -->
           </li>
         </ul>
   
@@ -214,8 +207,8 @@
           if (!response.ok) {
             this.alertMessage({
               showMessage: true,
-              title: "User not found",
-              message: "Please, check the username searched and try again.",
+              title: "Error!",
+              message: "Please, check the searched username and try again. Or wait a moment to search again.",
               type: "error"
             });
 
@@ -229,7 +222,7 @@
       this.getUserRepositories = async () => {
         this.showLoader(true);
 
-        await fetch(`https://api.github.com/users/${this.inputSearch()}/repos?page=${this.indexPage()}&per_page=50`,
+        await fetch(`https://api.github.com/users/${this.inputSearch()}/repos?page=${this.indexPage()}&per_page=10`,
         {
             method: "GET",
             headers: {
